@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
+// Couleurs pour l'affichage du logo
 #define RED   "\x1B[31m"
 #define RESET "\x1B[0m"
 
@@ -13,34 +15,66 @@ char* ip(void)
     return ip;
 }
 
+void get_linux_distribution(char *dist, size_t size) {
+    FILE *file = fopen("/etc/os-release", "r");
+    if (!file) {
+        perror("Erreur lors de l'ouverture de /etc/os-release");
+        exit(EXIT_FAILURE);
+    }
 
-void nmap(void)
-{
-    char* ip_cible = ip();
-    char commande[100];
-    FILE *fp;
-    char buffer[1024];
-
-    if (system("which nmap > /dev/null 2>&1") == 0) {
-        sprintf(commande, "nmap -p- -sV -sC -T4 %s", ip_cible);
-        printf("Commande : %s\n", commande);
-
-        fp = popen(commande, "r");
-        if (fp == NULL) {
-            perror("popen");
-            return;
+    char line[256];
+    while (fgets(line, sizeof(line), file)) {
+        if (strncmp(line, "ID=", 3) == 0) {
+            strncpy(dist, line + 3, size - 1);
+            dist[strcspn(dist, "\n")] = 0;  // Enlever le caractère de fin de ligne
+            break;
         }
+    }
+    fclose(file);
+}
 
-        while (fgets(buffer, sizeof(buffer), fp) != NULL) {
-            printf("%s", buffer);
-        }
+// Nmap
 
-        pclose(fp);
-    } 
-    else {
-        printf("nmap n'est pas installé.\nPour l'installer : https://nmap.org/download \n");
+int is_nmap_installed() {
+    return system("which nmap > /dev/null 2>&1") == 0;
+}
+
+
+void install_nmap(const char *dist) {
+    if (strcmp(dist, "ubuntu") == 0 || strcmp(dist, "debian") == 0) {
+        system("sudo apt update && sudo apt install -y nmap");
+    } else if (strcmp(dist, "fedora") == 0) {
+        system("sudo dnf install -y nmap");
+    } else if (strcmp(dist, "arch") == 0) {
+        system("sudo pacman -Syu nmap");
+    } else {
+        printf("Distribution non reconnue, installation manuelle requise.\n");
     }
 }
+
+int nmap() {
+    if (is_nmap_installed()) {
+        printf("Nmap est déjà installé.\n");
+    } else {
+        printf("Nmap n'est pas installé. Voulez-vous l'installer ? (o/n): ");
+        char choix;
+        scanf(" %c", &choix);
+        if (choix == 'o' || choix == 'O') {
+            char dist[50];
+            get_linux_distribution(dist, sizeof(dist));
+            printf("Installation de Nmap pour la distribution : %s\n", dist);
+            install_nmap(dist);
+        } else {
+            printf("Installation annulée.\n");
+        }
+    }
+
+    return 0;
+}
+
+// ---------------------------------------------------------------------------------
+
+
 
 void nikto(void)
 {
