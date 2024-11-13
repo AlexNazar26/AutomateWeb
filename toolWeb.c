@@ -52,25 +52,48 @@ void install_nmap(const char *dist) {
     }
 }
 
-int nmap() {
+void nmap() {
+    char commande[100];
+    FILE *fp;
+    char buffer[1024];
+
+
     if (is_nmap_installed()) {
-        printf("Nmap est déjà installé.\n");
-    } else {
-        printf("Nmap n'est pas installé. Voulez-vous l'installer ? (o/n): ");
+        char* ip_cible = ip();
+        sprintf(commande, "nmap -p- -sV -sC -T4 %s", ip_cible);
+        printf("Commande : %s\n", commande);
+
+        fp = popen(commande, "r");
+        if (fp == NULL) {
+            perror("popen");
+            return;
+        }
+
+        while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+            printf("%s", buffer);
+        }
+
+        pclose(fp);
+    }
+    else {
+        printf("Nmap n'est pas installé. Voulez-vous l'installer ? (y/n): ");
         char choix;
         scanf(" %c", &choix);
-        if (choix == 'o' || choix == 'O') {
+        if (choix == 'y' || choix == 'Y') {
             char dist[50];
             get_linux_distribution(dist, sizeof(dist));
             printf("Installation de Nmap pour la distribution : %s\n", dist);
             install_nmap(dist);
-        } else {
+            nmap();
+        } 
+        else {
             printf("Installation annulée.\n");
         }
+        
     }
-
-    return 0;
+   
 }
+
 
 // ---------------------------------------------------------------------------------
 
