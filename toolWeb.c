@@ -96,17 +96,33 @@ void nmap() {
 
 
 // ---------------------------------------------------------------------------------
+// Nikto
 
+int is_nikto_installed() {
+    return system("which nikto > /dev/null 2>&1") == 0;
+}
 
+void install_nikto(const char *dist) {
+    if (strcmp(dist, "ubuntu") == 0 || strcmp(dist, "debian") == 0) {
+        system("sudo apt update && sudo apt install -y nikto");
+    } else if (strcmp(dist, "fedora") == 0) {
+        system("sudo dnf install -y nikto");
+    } else if (strcmp(dist, "arch") == 0) {
+        system("sudo pacman -Syu nikto");
+    } else {
+        printf("Distribution non reconnue, installation manuelle requise.\n");
+    }
+}
 
 void nikto(void)
 {
-    char* ip_cible = ip();
     char commande[100];
     FILE *fp;
     char buffer[1024];
 
-    if (system("which nikto > /dev/null 2>&1") == 0) {
+
+    if (is_nikto_installed()) {
+        char* ip_cible = ip();
         sprintf(commande, "nikto -h %s", ip_cible);
         printf("Commande : %s\n", commande);
 
@@ -121,21 +137,68 @@ void nikto(void)
         }
 
         pclose(fp);
-    } 
+    }
     else {
-        printf("nikto n'est pas installé.\nPour l'installer : https://cirt.net/Nikto2 \n");
+        printf("Nikto n'est pas installé. Voulez-vous l'installer ? (y/n): ");
+        char choix;
+        scanf(" %c", &choix);
+        if (choix == 'y' || choix == 'Y') {
+            char dist[50];
+            get_linux_distribution(dist, sizeof(dist));
+            printf("Installation de Nikto pour la distribution : %s\n", dist);
+            install_nikto(dist);
+            nikto();
+        } 
+        else {
+            printf("Installation annulée.\n");
+        }
+        
     }
 }
 
+// ---------------------------------------------------------------------------------
+// GoBuster
+int is_gobuster_installed() {
+    return system("which gobuster > /dev/null 2>&1") == 0;
+}
+
+
+
+void install_gobuster(const char *dist) {
+    if (strcmp(dist, "ubuntu") == 0 || strcmp(dist, "debian") == 0) {
+        system("sudo apt update && sudo apt install -y gobuster");
+    } else if (strcmp(dist, "fedora") == 0) {
+        system("sudo dnf install -y gobuster");
+    } else if (strcmp(dist, "arch") == 0) {
+        system("sudo pacman -Syu gobuster");
+    } else {
+        printf("Distribution non reconnue, installation manuelle requise.\n");
+    }
+}
+
+
+
 void gobuster(void)
 {
-    char* ip_cible = ip();
     char commande[100];
     FILE *fp;
     char buffer[1024];
 
-    if (system("which gobuster > /dev/null 2>&1") == 0) {
-        sprintf(commande, "gobuster dir -u http://%s -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -t 50", ip_cible);
+    if (is_gobuster_installed()) {
+        if (access("/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt", F_OK) != 0) {
+        printf("Wordlist n'est pas installé. Voulez-vous l'installer ? (y/n): ");
+        char choix;
+        scanf(" %c", &choix);
+        if (choix == 'y' || choix == 'Y') {
+            system("sudo mkdir -p /usr/share/wordlists/dirbuster");
+            system("sudo wget https://raw.githubusercontent.com/daviddias/node-dirbuster/refs/heads/master/lists/directory-list-2.3-medium.txt -P /usr/share/wordlists/dirbuster/");
+        } 
+        else {
+            printf("Installation annulée.\n");
+        }
+    }
+        char* ip_cible = ip();
+        sprintf(commande, "gobuster dir -u http://%s -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt", ip_cible);
         printf("Commande : %s\n", commande);
 
         fp = popen(commande, "r");
@@ -149,11 +212,27 @@ void gobuster(void)
         }
 
         pclose(fp);
-    } 
-    else {
-        printf("gobuster n'est pas installé.\nPour l'installer :https://github.com/OJ/gobuster \n");
     }
+    else {
+        printf("GoBuster n'est pas installé. Voulez-vous l'installer ? (y/n): ");
+        char choix;
+        scanf(" %c", &choix);
+        if (choix == 'y' || choix == 'Y') {
+            char dist[50];
+            get_linux_distribution(dist, sizeof(dist));
+            printf("Installation de GoBuster pour la distribution : %s\n", dist);
+            install_gobuster(dist);
+            gobuster();
+        } 
+        else {
+            printf("Installation annulée.\n");
+        }
+        
+    }
+    
+    
 }
+
 
 void wpscan(void)
 {
@@ -185,10 +264,15 @@ void wpscan(void)
 
 int main(void) {
     int choix;
+
     
 
+    printf("\n\n");
+    system("echo 'Welcome to ToolKaliWeb'");
 
-    printf(RED "  ___          _                             _           _    _        _                                   \n"
+    while (1) {  // Boucle infinie pour garder le menu actif jusqu'à ce que l'utilisateur choisisse de quitter
+        system("clear");
+        printf(RED "  ___          _                             _           _    _        _                                   \n"
            " / _ \\        | |                           | |         | |  | |      | |                                  \n"
            "/ /_\\ \\ _   _ | |_   ___   _ __ ___    __ _ | |_   ___  | |  | |  ___ | |__                                \n"
            "|  _  || | | || __| / _ \\ | '_ ` _ \\  / _` || __| / _ \\ | |/\\| | / _ \\| '_ \\                               \n"
@@ -202,38 +286,39 @@ int main(void) {
            "          | |_/ /| |_| | | | | || ||  __/ >  < | |\\__ \\        /\\__/ /|  __/| |   | (_| ||  __/| | | || |_ \n"
            "          \\____/  \\__, | \\_| |_/|_| \\___|/_/\\_\\|_||___/        \\____/  \\___||_|    \\__, | \\___||_| |_| \\__|\n"
            "                   __/ |                                ______                      __/ |                   \n"
-           "                  |___/                                |______|                    |___/                    \n"RESET);
+           "                  |___/                                |______|                    |___/                    \n" RESET);
+        
+        printf("Quel outil voulez-vous utiliser ?\
+                \n          1. Nmap\
+                \n          2. Nikto\
+                \n          3. GoBuster\
+                \n          4. Wpscan\
+                \n          5. Exit\
+                \n=> ");
+        scanf("%d", &choix);
 
-    printf("\n\n");
-    system("echo 'Welcome to ToolKaliWeb'");
-    printf("Quel outil voulez-vous utiliser ?\
-            \n          1. Nmap\
-            \n          2. Nikto\
-            \n          3. GoBuster\
-            \n          4. Wpscan\
-            \n          5. Exit\
-            \n=> ");
-    scanf("%d", &choix);
-    switch (choix)
-    {
-    case 1 :
-        nmap();
-        break;
-    case 2 :
-        nikto();
-        break;
-    case 3 :
-        gobuster();
-        break;
-    case 4 :
-        wpscan();
-        break;
-    default:
-        break;
+        switch (choix) {
+            case 1:
+                nmap();
+                break;
+            case 2:
+                nikto();
+                break;
+            case 3:
+                gobuster();
+                break;
+            case 4:
+                wpscan();
+                break;
+            case 5:
+                printf("Exiting...\n");
+                return 0;  // Quitte le programme
+            default:
+                printf("Choix invalide. Veuillez réessayer.\n");
+                break;
+        }
     }
-    
+
     return 0;
 }
-
-
 
