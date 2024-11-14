@@ -232,7 +232,8 @@ void gobuster(void)
     
     
 }
-
+// ---------------------------------------------------------------------------------
+// Wpscan
 
 void wpscan(void)
 {
@@ -270,7 +271,7 @@ int main(void) {
     printf("\n\n");
     system("echo 'Welcome to ToolKaliWeb'");
 
-    while (1) {  // Boucle infinie pour garder le menu actif jusqu'à ce que l'utilisateur choisisse de quitter
+    while (1) { 
         system("clear");
         printf(RED "  ___          _                             _           _    _        _                                   \n"
            " / _ \\        | |                           | |         | |  | |      | |                                  \n"
@@ -312,7 +313,7 @@ int main(void) {
                 break;
             case 5:
                 printf("Exiting...\n");
-                return 0;  // Quitte le programme
+                return 0;  
             default:
                 printf("Choix invalide. Veuillez réessayer.\n");
                 break;
