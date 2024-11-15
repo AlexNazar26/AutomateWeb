@@ -4,26 +4,26 @@
 #include <unistd.h>
 
 
-// Couleurs pour l'affichage du logo
 #define RED   "\x1B[31m"
 #define RESET "\x1B[0m"
 
-void afficher_aide() {
-    printf("Usage : ./ToolWeb [OPTIONS]\n");
-    printf("Options :\n");
-    printf("  -h        Affiche cette aide\n");
-    printf("  -ip <IP>  Spécifie l'adresse IP de la cible\n");
-    printf("  -nmap     Pour utiliser nmap\n");
-    printf("  -nikto    Pour utiliser nikto\n");
-    printf("  -gobuster Pour utiliser gobuster\n");
-    printf("  -wpscan   Pour utiliser wpscan\n");
-    printf("\nExemple : ./ToolWeb -ip 127.0.0.1 -namp (Ip à spécifier en premier)\n");
+void display_help() {
+    printf("Usage: ./ToolWeb [OPTIONS]\n");
+    printf("Options:\n");
+    printf("  -h        Displays this help\n");
+    printf("  -ip <IP>  Specifies the target IP address\n");
+    printf("  -nmap     To use nmap\n");
+    printf("  -nikto    To use nikto\n");
+    printf("  -gobuster To use gobuster\n");
+    printf("  -wpscan   To use wpscan\n");
+    printf("\nExample: ./ToolWeb -ip 127.0.0.1 -nmap (IP must be specified first)\n");
 }
+
 
 void get_linux_distribution(char *dist, size_t size) {
     FILE *file = fopen("/etc/os-release", "r");
     if (!file) {
-        perror("Erreur lors de l'ouverture de /etc/os-release");
+        perror("Error while opening /etc/os-release");
         exit(EXIT_FAILURE);
     }
 
@@ -31,7 +31,7 @@ void get_linux_distribution(char *dist, size_t size) {
     while (fgets(line, sizeof(line), file)) {
         if (strncmp(line, "ID=", 3) == 0) {
             strncpy(dist, line + 3, size - 1);
-            dist[strcspn(dist, "\n")] = 0;  // Enlever le caractère de fin de ligne
+            dist[strcspn(dist, "\n")] = 0;  
             break;
         }
     }
@@ -53,7 +53,7 @@ void install_nmap(const char *dist) {
     } else if (strcmp(dist, "arch") == 0) {
         system("sudo pacman -Syu nmap");
     } else {
-        printf("Distribution non reconnue, installation manuelle requise.\n");
+        printf("Unrecognized distribution, manual installation required.\n");
     }
 }
 
@@ -64,7 +64,7 @@ void nmap(const char *ip_cible) {
 
     if (is_nmap_installed()) {
         sprintf(commande, "nmap -p- -sV -sC -T4 %s", ip_cible);
-        printf("Commande : %s\n", commande);
+        printf("Command : %s\n", commande);
 
         fp = popen(commande, "r");
         if (fp == NULL) {
@@ -78,22 +78,24 @@ void nmap(const char *ip_cible) {
 
         pclose(fp);
     } else {
-        printf("Nmap n'est pas installé. Voulez-vous l'installer ? (y/n): ");
+        printf("Nmap is not installed. Do you want to install it? (y/n): ");
         char choix;
         scanf(" %c", &choix);
         if (choix == 'y' || choix == 'Y') {
             char dist[50];
             get_linux_distribution(dist, sizeof(dist));
-            printf("Installation de Nmap pour la distribution : %s\n", dist);
+            printf("Installing Nmap for the distribution : %s\n", dist);
             install_nmap(dist);
-            nmap(ip_cible); // Rappel de la fonction après installation
+            nmap(ip_cible); 
         } else {
-            printf("Installation annulée.\n");
+            printf("Installation canceled.\n");
         }
     }
 }
 // --------------------------------------------------------------
 // Nikto
+
+
 int is_nikto_installed() {
     return system("which nikto > /dev/null 2>&1") == 0;
 }
@@ -106,7 +108,7 @@ void install_nikto(const char *dist) {
     } else if (strcmp(dist, "arch") == 0) {
         system("sudo pacman -Syu nikto");
     } else {
-        printf("Distribution non reconnue, installation manuelle requise.\n");
+        printf("Unrecognized distribution, manual installation required.\n");
     }
 }
 
@@ -119,7 +121,7 @@ void nikto(const char *ip_cible)
 
     if (is_nikto_installed()) {
         sprintf(commande, "nikto -h %s", ip_cible);
-        printf("Commande : %s\n", commande);
+        printf("Command : %s\n", commande);
 
         fp = popen(commande, "r");
         if (fp == NULL) {
@@ -134,18 +136,18 @@ void nikto(const char *ip_cible)
         pclose(fp);
     }
     else {
-        printf("Nikto n'est pas installé. Voulez-vous l'installer ? (y/n): ");
+        printf("Nikto is not installed. Do you want to install it? (y/n): ");
         char choix;
         scanf(" %c", &choix);
         if (choix == 'y' || choix == 'Y') {
             char dist[50];
             get_linux_distribution(dist, sizeof(dist));
-            printf("Installation de Nikto pour la distribution : %s\n", dist);
+            printf("Installing Nikto for the distribution : %s\n", dist);
             install_nikto(dist);
             nikto(ip_cible);
         } 
         else {
-            printf("Installation annulée.\n");
+            printf("Installation canceled.\n");
         }
         
     }
@@ -168,7 +170,7 @@ void install_gobuster(const char *dist) {
     } else if (strcmp(dist, "arch") == 0) {
         system("sudo pacman -Syu gobuster");
     } else {
-        printf("Distribution non reconnue, installation manuelle requise.\n");
+        printf("Unrecognized distribution, manual installation required.\n");
     }
 }
 
@@ -182,7 +184,7 @@ void gobuster(const char *ip_cible)
 
     if (is_gobuster_installed()) {
         if (access("/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt", F_OK) != 0) {
-        printf("Wordlist n'est pas installé. Voulez-vous l'installer ? (y/n): ");
+        printf("Wordlist is not installed. Do you want to install it? (y/n): ");
         char choix;
         scanf(" %c", &choix);
         if (choix == 'y' || choix == 'Y') {
@@ -190,11 +192,11 @@ void gobuster(const char *ip_cible)
             system("sudo wget https://raw.githubusercontent.com/daviddias/node-dirbuster/refs/heads/master/lists/directory-list-2.3-medium.txt -P /usr/share/wordlists/dirbuster/");
         } 
         else {
-            printf("Installation annulée.\n");
+            printf("Installation canceled.\n");
         }
     }
         sprintf(commande, "gobuster dir -u http://%s -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt", ip_cible);
-        printf("Commande : %s\n", commande);
+        printf("Command : %s\n", commande);
 
         fp = popen(commande, "r");
         if (fp == NULL) {
@@ -209,18 +211,18 @@ void gobuster(const char *ip_cible)
         pclose(fp);
     }
     else {
-        printf("GoBuster n'est pas installé. Voulez-vous l'installer ? (y/n): ");
+        printf("GoBuster is not installed. Do you want to install it? (y/n): ");
         char choix;
         scanf(" %c", &choix);
         if (choix == 'y' || choix == 'Y') {
             char dist[50];
             get_linux_distribution(dist, sizeof(dist));
-            printf("Installation de GoBuster pour la distribution : %s\n", dist);
+            printf("Installing Gobuster for the distribution : %s\n", dist);
             install_gobuster(dist);
             gobuster(ip_cible);
         } 
         else {
-            printf("Installation annulée.\n");
+            printf("Installation canceled\n");
         }
         
     }
@@ -247,7 +249,7 @@ void install_wpscan(const char *dist) {
         system("sudo pacman -S ruby libxml2 libxslt");
         system("sudo gem install wpscan");
     } else {
-        printf("Distribution non reconnue, installation manuelle requise.\n");
+        printf("Unrecognized distribution, manual installation required\n");
     }
 }
 
@@ -261,7 +263,7 @@ void wpscan(const char *ip_cible)
    
     if (is_wpscan_installed()) {
         sprintf(commande, "wpscan --url http://%s -e ap,at,u", ip_cible);
-        printf("Commande : %s\n", commande);
+        printf("Command : %s\n", commande);
 
         
         fp = popen(commande, "r");
@@ -277,17 +279,17 @@ void wpscan(const char *ip_cible)
 
         pclose(fp);
     } else {
-        printf("wpscan n'est pas installé. Voulez-vous l'installer ? (y/n): ");
+        printf("Wpscan is not installed. Do you want to install it? (y/n): ");
         char choix;
         scanf(" %c", &choix);
         if (choix == 'y' || choix == 'Y') {
             char dist[50];
             get_linux_distribution(dist, sizeof(dist));
-            printf("Installation de wpscan pour la distribution : %s\n", dist);
+            printf("Installing Wpscan for the distribution : %s\n", dist);
             install_wpscan(dist);
             wpscan(ip_cible);  
         } else {
-            printf("Installation annulée.\n");
+            printf("Installation canceled.\n");
         }
     }
 }
@@ -313,64 +315,64 @@ int main(int argc, char *argv[]) {
            "                  |___/                                |______|                    |___/                    \n" RESET);
 
     printf("\n\n");
-    printf("Bienvenue dans ToolWeb\n\n");
+    printf("Welcome to ToolWeb\n\n");
     printf("\n\n");
 
-    // Parcourir les arguments
+    
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-h") == 0) {
-            afficher_aide();
-            return 0; // Quitte après l'affichage de l'aide
+            display_help();
+            return 0; 
         } else if (strcmp(argv[i], "-ip") == 0) {
-            if (i + 1 < argc) { // Vérifie si une IP suit l'argument
+            if (i + 1 < argc) { 
                 ip_cible = argv[i + 1];
-                i++; // Saute à l'argument suivant
+                i++; 
             } else {
-                printf("Erreur : L'option -ip nécessite une adresse IP.\n");
+                printf("Error: The -ip option requires an IP address.\n");
                 return 1;
             }
         } else if (strcmp(argv[i], "-nmap") == 0) {
             if (ip_cible == NULL) {
-                printf("Erreur : L'option -nmap nécessite une adresse IP avec -ip.\n");
+                printf("Error: The -nmap option requires an IP address with -ip.\n");
                 return 1;
             }
-            nmap(ip_cible); // Appel de la fonction avec l'IP cible
+            nmap(ip_cible); 
             return 0;
         } 
         else if (strcmp(argv[i], "-nikto") == 0) {
             if (ip_cible == NULL) {
-                printf("Erreur : L'option -nikto nécessite une adresse IP avec -ip.\n");
+                printf("Error: The -nikto option requires an IP address with -ip.\n");
                 return 1;
             }
-            nikto(ip_cible); // Appel de la fonction avec l'IP cible
+            nikto(ip_cible); 
             return 0;
         } 
         else if (strcmp(argv[i], "-gobuster") == 0) {
             if (ip_cible == NULL) {
-                printf("Erreur : L'option -gobuster nécessite une adresse IP avec -ip.\n");
+                printf("Error: The -gobuster option requires an IP address with -ip.\n");
                 return 1;
             }
-            gobuster(ip_cible); // Appel de la fonction avec l'IP cible
+            gobuster(ip_cible); 
             return 0;
         } 
         else if (strcmp(argv[i], "-wpscan") == 0) {
             if (ip_cible == NULL) {
-                printf("Erreur : L'option -wpscan nécessite une adresse IP avec -ip.\n");
+                printf("Error: The -wpscan option requires an IP address with -ip.\n");
                 return 1;
             }
-            wpscan(ip_cible); // Appel de la fonction avec l'IP cible
+            wpscan(ip_cible); 
             return 0;
         } else {
-            printf("Option inconnue : %s\n", argv[i]);
-            afficher_aide();
+            printf("Unknown option: %s\n", argv[i]);
+            display_help();
             return 1;
         }
     }
 
     if (ip_cible) {
-        printf("IP cible spécifiée : %s\n", ip_cible);
+        printf("Target IP specified: %s\n", ip_cible);
     } else {
-        printf("Aucune IP spécifiée. Utilisez -h pour voir les options.\n");
+        printf("No IP specified. Use -h to see the options.\n");
     }
 
     
